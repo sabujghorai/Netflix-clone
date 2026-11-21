@@ -1,54 +1,98 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Netflix Clone – Sign In</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23141414'/%3E%3Ctext x='50' y='76' font-size='74' font-weight='900' text-anchor='middle' fill='%23e50914' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/script.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign In | Netflix</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js" defer></script>
+    <script src="js/script.js" defer></script>
 </head>
+
 <body data-page="signin">
 
-  <header class="nav" id="nav">
-    <div class="nav-left"><a class="logo" href="index.html">NETFLIX</a></div>
-  </header>
+    <header class="nav" id="nav">
+        <div class="nav-left">
+            <a class="logo" href="index.html">NETFLIX</a>
+        </div>
+        <div class="nav-right">
+            <a href="get_started.html" class="btn btn-red">Join Now</a>
+        </div>
+    </header>
 
-  <main class="auth-page">
     <div class="hero-bg">
-      <div class="poster-wall" data-wall></div>
-      <div class="spot"></div>
+        <div class="poster-wall" data-wall></div>
+        <div class="spot"></div>
     </div>
 
-    <div class="auth-card">
-      <h1>Sign In</h1>
-      <div id="banner" class="banner hidden" role="alert"></div>
+    <main class="auth-page">
+        <section class="auth-card">
 
-      <form id="signin-form" novalidate>
-        <div class="field" id="f-id">
-          <input type="text" id="si-id" placeholder=" " autocomplete="username">
-          <label for="si-id">Email or mobile number</label>
-          <div class="err"></div>
-        </div>
-        <div class="field has-toggle" id="f-pw">
-          <input type="password" id="si-pw" placeholder=" " autocomplete="current-password">
-          <label for="si-pw">Password</label>
-          <button type="button" class="toggle-pw" aria-label="Show or hide password">Show</button>
-          <div class="err"></div>
-        </div>
+            <h1>Sign In</h1>
 
-        <button type="submit" class="btn btn-red">Sign In</button>
+            <div id="banner" class="banner hidden" aria-live="polite"></div>
 
-        <div class="row-opts">
-          <label><input type="checkbox" id="si-remember" checked> Remember me</label>
-          <a href="#">Need help?</a>
-        </div>
-      </form>
+            <form id="signin-form" novalidate>
 
-      <p class="switch-line">New to Netflix? <a href="get_started.html">Sign up now</a>.</p>
-      <p class="hint">Try the demo account: <b>demo@netflix.com</b> / <b>123456</b> &nbsp;·&nbsp; <a href="#" id="fill-demo" style="text-decoration:underline;color:#ddd">Fill it in</a></p>
-    </div>
-  </main>
+                <div class="field" id="f-id">
+                    <input
+                        type="text"
+                        id="si-id"
+                        placeholder=" "
+                        autocomplete="username"
+                    >
+                    <label for="si-id">Email or mobile number</label>
+                    <div class="err"></div>
+                </div>
+
+                <div class="field has-toggle" id="f-pw">
+                    <input
+                        type="password"
+                        id="si-pw"
+                        placeholder=" "
+                        autocomplete="current-password"
+                    >
+                    <label for="si-pw">Password</label>
+                    <button type="button" class="toggle-pw">Show</button>
+                    <div class="err"></div>
+                </div>
+
+                <button class="btn btn-red btn-lg" type="submit">
+                    Sign In
+                </button>
+
+                <div class="row-opts">
+                    <label>
+                        <input type="checkbox" id="si-remember">
+                        Remember me
+                    </label>
+                    <a href="#" id="fill-demo">Use demo account</a>
+                </div>
+
+            </form>
+
+            <p class="switch-line">
+                New to Netflix?
+                <a href="get_started.html">Sign up now.</a>
+            </p>
+
+            <p class="hint">
+                Demo account:
+                <b>demo@netflix.com</b>
+                /
+                <b>123456</b>
+            </p>
+
+            <p class="hint">
+                This project is a frontend demo. No real Netflix authentication is used.
+            </p>
+
+        </section>
+    </main>
 
 </body>
 </html>

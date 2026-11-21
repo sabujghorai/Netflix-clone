@@ -1,82 +1,164 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Netflix Clone – Create your membership</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23141414'/%3E%3Ctext x='50' y='76' font-size='74' font-weight='900' text-anchor='middle' fill='%23e50914' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/script.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Join Netflix</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js" defer></script>
+    <script src="js/script.js" defer></script>
 </head>
+
 <body data-page="start">
 
-  <header class="nav" id="nav">
-    <div class="nav-left"><a class="logo" href="index.html">NETFLIX</a></div>
-    <div class="nav-right"><a href="signin.html" class="btn btn-ghost">Sign In</a></div>
-  </header>
+    <header class="nav" id="nav">
+        <div class="nav-left">
+            <a class="logo" href="index.html">NETFLIX</a>
+        </div>
 
-  <main class="auth-page">
+        <div class="nav-right">
+            <a href="signin.html" class="btn btn-red">Sign In</a>
+        </div>
+    </header>
+
     <div class="hero-bg">
-      <div class="poster-wall" data-wall></div>
-      <div class="spot"></div>
+        <div class="poster-wall" data-wall></div>
+        <div class="spot"></div>
     </div>
 
-    <div class="auth-card wide">
-      <div class="step-label" id="step-label">STEP 1 OF 2</div>
-      <div class="progress" id="progress"><i></i></div>
-      <div id="banner" class="banner hidden" role="alert"></div>
+    <main class="auth-page">
+        <section class="auth-card wide">
 
-      <!-- STEP 1 : account -->
-      <form id="step1" novalidate>
-        <h2 class="step-title">Create a password to start your membership</h2>
-        <p class="step-note">Just a few more steps and you're done! We hate paperwork, too.</p>
+            <div id="step-label" class="step-label">
+                STEP 1 OF 2
+            </div>
 
-        <div class="field" id="f-email">
-          <input type="email" id="su-email" placeholder=" " autocomplete="email">
-          <label for="su-email">Email</label>
-          <div class="err"></div>
-        </div>
-        <div class="field has-toggle" id="f-pass">
-          <input type="password" id="su-pass" placeholder=" " autocomplete="new-password">
-          <label for="su-pass">Add a password</label>
-          <button type="button" class="toggle-pw" aria-label="Show or hide password">Show</button>
-          <div class="err"></div>
-        </div>
-        <button type="submit" class="btn btn-red btn-lg">Next</button>
-        <p class="switch-line">Already a member? <a href="signin.html">Sign in</a></p>
-      </form>
+            <div id="progress" class="progress">
+                <i></i>
+            </div>
 
-      <!-- STEP 2 : plan -->
-      <form id="step2" class="hidden" novalidate>
-        <h2 class="step-title">Choose the plan that's right for you</h2>
-        <p class="step-note">Downgrade or upgrade at any time. No contracts, no commitments.</p>
+            <div id="banner" class="banner hidden" aria-live="polite"></div>
 
-        <div class="plans">
-          <label class="plan">
-            <input type="radio" name="plan" value="Mobile">
-            <div class="plan-box"><div><b>Mobile</b><small>480p · 1 phone or tablet</small></div><span class="plan-price">₹149/mo</span></div>
-          </label>
-          <label class="plan">
-            <input type="radio" name="plan" value="Basic">
-            <div class="plan-box"><div><b>Basic</b><small>720p · 1 screen</small></div><span class="plan-price">₹199/mo</span></div>
-          </label>
-          <label class="plan">
-            <span class="pop">MOST POPULAR</span>
-            <input type="radio" name="plan" value="Standard" checked>
-            <div class="plan-box"><div><b>Standard</b><small>1080p · 2 screens</small></div><span class="plan-price">₹499/mo</span></div>
-          </label>
-          <label class="plan">
-            <input type="radio" name="plan" value="Premium">
-            <div class="plan-box"><div><b>Premium</b><small>4K + HDR · 4 screens</small></div><span class="plan-price">₹649/mo</span></div>
-          </label>
-        </div>
+            <!-- STEP 1 -->
+            <form id="step1" novalidate>
 
-        <button type="submit" class="btn btn-red btn-lg">Start Membership</button>
-        <p class="switch-line"><a href="#" id="back-link">‹ Back</a></p>
-        <p class="hint">Demo only: no payment is taken and your details stay in this browser (localStorage).</p>
-      </form>
-    </div>
-  </main>
+                <h1 class="step-title">Create your account</h1>
+
+                <p class="step-note">
+                    Start your movie and series journey.
+                </p>
+
+                <div class="field" id="f-email">
+                    <input
+                        type="email"
+                        id="su-email"
+                        placeholder=" "
+                        autocomplete="email"
+                    >
+                    <label for="su-email">Email address</label>
+                    <div class="err"></div>
+                </div>
+
+                <div class="field has-toggle" id="f-pass">
+                    <input
+                        type="password"
+                        id="su-pass"
+                        placeholder=" "
+                        autocomplete="new-password"
+                    >
+                    <label for="su-pass">Create password</label>
+                    <button type="button" class="toggle-pw">Show</button>
+                    <div class="err"></div>
+                </div>
+
+                <button type="submit" class="btn btn-red btn-lg">
+                    Continue
+                </button>
+
+                <p class="switch-line">
+                    Already have an account?
+                    <a href="signin.html">Sign In</a>
+                </p>
+
+            </form>
+
+            <!-- STEP 2 -->
+            <form id="step2" class="hidden">
+
+                <h2 class="step-title">Choose your plan</h2>
+
+                <p class="step-note">
+                    You can change your plan at any time.
+                </p>
+
+                <div class="plans">
+
+                    <label class="plan">
+                        <input type="radio" name="plan" value="Mobile">
+                        <div class="plan-box">
+                            <div>
+                                <b>Mobile</b>
+                                <small>480p · Phone & tablet</small>
+                            </div>
+                            <strong>₹149/mo</strong>
+                        </div>
+                    </label>
+
+                    <label class="plan">
+                        <input type="radio" name="plan" value="Basic">
+                        <div class="plan-box">
+                            <div>
+                                <b>Basic</b>
+                                <small>720p · 1 screen</small>
+                            </div>
+                            <strong>₹199/mo</strong>
+                        </div>
+                    </label>
+
+                    <label class="plan">
+                        <input type="radio" name="plan" value="Standard" checked>
+                        <div class="plan-box">
+                            <div>
+                                <b>Standard</b>
+                                <small>1080p · 2 screens</small>
+                            </div>
+                            <strong>₹499/mo</strong>
+                        </div>
+                    </label>
+
+                    <label class="plan">
+                        <input type="radio" name="plan" value="Premium">
+                        <div class="plan-box">
+                            <div>
+                                <b>Premium</b>
+                                <small>4K + HDR · 4 screens</small>
+                            </div>
+                            <strong>₹649/mo</strong>
+                        </div>
+                    </label>
+
+                </div>
+
+                <button type="submit" class="btn btn-red btn-lg">
+                    Create Account
+                </button>
+
+                <p class="switch-line">
+                    <a href="#" id="back-link">← Back</a>
+                </p>
+
+            </form>
+
+            <p class="hint">
+                Demo project only. No real subscription or payment is processed.
+            </p>
+
+        </section>
+    </main>
 
 </body>
 </html>

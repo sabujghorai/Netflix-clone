@@ -1,14 +1,33 @@
 /* ==========================================================
-   NETFLIX CLONE – script.js
-   One script powers all three pages (index / get_started / signin)
-   The current page is read from <body data-page="...">
+   NETFLIX CLONE – script.js  (3D / scroll-driven edition)
+
+   Sections
+   1. helpers + data + auth
+   2. UI: toast, modal, cards, rows, billboard, genres
+   3. 3D scene (Three.js): logo, poster tunnel, particles, camera flight
+   4. Scroll engine: smooth scroll, pinned chapters, 3D gallery
+   5. Effects: loader, cursor, tilt, magnetic, reveal, counters
+   6. Pages: sign-in, sign-up, boot
+
+   Needs (loaded by each HTML page from a CDN):
+     three.js r128  – 3D scene   (optional: falls back to CSS background)
+     Lenis          – smooth scroll (optional: falls back to native)
    ========================================================== */
 (() => {
   'use strict';
 
-  /* ---------- helpers ---------- */
+  const html = document.documentElement;
+  html.classList.add('js');
+
+  /* ==========================================================
+     1. HELPERS + DATA + AUTH
+     ========================================================== */
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const store = {
     get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -30,7 +49,7 @@
     return a;
   };
 
-  /* ---------- catalogue (gradient "posters" – no external images needed) ---------- */
+  /* catalogue (gradient "posters" – no external images needed) */
   const TITLES = [
     { id: 1,  title: 'Stranger Nights',   type: 'series', genre: 'Sci-Fi · Horror',    year: 2024, rating: '16+', match: 98, emoji: '🔦', c: ['#8a0020', '#14062e'], desc: 'When a boy vanishes after a power surge, a group of friends uncovers a hidden world beneath their quiet town.' },
     { id: 2,  title: 'Money Vault',       type: 'series', genre: 'Crime · Thriller',   year: 2023, rating: '18+', match: 97, emoji: '🎭', c: ['#b30000', '#2b0000'], desc: 'A mastermind recruits eight strangers for the most daring heist in history. Nothing goes to plan.' },
@@ -56,7 +75,18 @@
   const byId = (id) => TITLES.find(t => t.id === Number(id));
   const grad = (t) => `linear-gradient(160deg, ${t.c[0]} 0%, ${t.c[1]} 100%)`;
 
-  /* ---------- auth / session ---------- */
+  const GENRES = [
+    { name: 'Action',   emoji: '💥', c: ['#b30000', '#2b0000'] },
+    { name: 'Comedy',   emoji: '😂', c: ['#d89a2b', '#3a1a00'] },
+    { name: 'Horror',   emoji: '👻', c: ['#4a0a5a', '#050008'] },
+    { name: 'Sci-Fi',   emoji: '🛸', c: ['#0f3b6b', '#02060f'] },
+    { name: 'Romance',  emoji: '💘', c: ['#d6336c', '#3a0a1e'] },
+    { name: 'Thriller', emoji: '🔪', c: ['#3a3a3a', '#000000'] },
+    { name: 'Anime',    emoji: '🍥', c: ['#7a1aff', '#0a0224'] },
+    { name: 'Mystery',  emoji: '🕵️', c: ['#1d4d2a', '#050f08'] }
+  ];
+
+  /* auth / session */
   const getUsers = () => store.get(KEYS.users, []);
   const getSession = () => store.get(KEYS.session, null);
   const myList = () => store.get(KEYS.list, []);
@@ -70,7 +100,13 @@
   }
   const userExists = (id) => normId(id) === DEMO.email || getUsers().some(u => u.email === normId(id));
 
-  /* ---------- UI helpers ---------- */
+  /* ==========================================================
+     2. UI : toast, errors, background fallback, cards, rows, modal
+     ========================================================== */
+  const state = { filter: 'all', q: '' };
+  const scroll = { y: 0, max: 1, p: 0, vel: 0, lenis: null };
+  const mouse = { x: 0, y: 0, px: innerWidth / 2, py: innerHeight / 2 };
+
   function toast(msg) {
     let t = $('.toast');
     if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
@@ -87,7 +123,7 @@
     if (err) err.textContent = msg || '';
   }
 
-  /* ---------- cinematic background ---------- */
+  /* CSS poster wall – used as the fallback background if WebGL is unavailable */
   const posterTile = (t) =>
     `<div class="poster-tile" style="--g:${grad(t)}"><span class="pt-emoji">${t.emoji}</span><span class="pt-title">${t.title}</span></div>`;
 
@@ -100,71 +136,11 @@
         col.className = 'poster-col';
         col.style.animationDuration = (60 + Math.random() * 45) + 's';
         const tiles = shuffle(TITLES).slice(0, 8).map(posterTile).join('');
-        col.innerHTML = tiles + tiles; // doubled for seamless loop
+        col.innerHTML = tiles + tiles;
         wall.appendChild(col);
       }
     });
   }
-
-  function initSpotlight() {
-    $$('.hero, .billboard, .auth-page').forEach(sec => {
-      const spot = $('.spot', sec);
-      if (!spot) return;
-      sec.addEventListener('mousemove', (e) => {
-        const r = sec.getBoundingClientRect();
-        spot.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-        spot.style.setProperty('--my', (e.clientY - r.top) + 'px');
-      });
-    });
-  }
-
-  /* ---------- navbar ---------- */
-  function initNav() {
-    const nav = $('#nav');
-    if (nav) {
-      const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 24);
-      onScroll();
-      window.addEventListener('scroll', onScroll, { passive: true });
-    }
-
-    const session = getSession();
-    document.body.classList.toggle('logged-in', !!session && document.body.dataset.page === 'home');
-
-    if (session) {
-      const av = $('#avatar'); if (av) av.textContent = (session.name || session.email || 'U').charAt(0).toUpperCase();
-      const who = $('#menu-who'); if (who) who.textContent = session.email;
-    }
-
-    const profile = $('.profile');
-    if (profile) {
-      $('#avatar-btn').addEventListener('click', (e) => { e.stopPropagation(); $('.menu', profile).classList.toggle('open'); });
-      document.addEventListener('click', () => $('.menu', profile).classList.remove('open'));
-    }
-    const out = $('#signout');
-    if (out) out.addEventListener('click', () => { store.del(KEYS.session); location.href = 'index.html'; });
-
-    const search = $('.search');
-    if (search) {
-      const input = $('input', search);
-      $('button', search).addEventListener('click', () => {
-        search.classList.toggle('open');
-        if (search.classList.contains('open')) input.focus();
-        else { input.value = ''; state.q = ''; renderRows(); }
-      });
-      input.addEventListener('input', () => { state.q = input.value.trim().toLowerCase(); renderRows(); });
-    }
-
-    $$('.nav-links button').forEach(b => b.addEventListener('click', () => {
-      $$('.nav-links button').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      state.filter = b.dataset.filter;
-      renderRows();
-      if (state.filter !== 'all') window.scrollTo({ top: 0, behavior: 'smooth' });
-    }));
-  }
-
-  /* ---------- cards / rows ---------- */
-  const state = { filter: 'all', q: '' };
 
   function cardEl(t) {
     const inList = myList().includes(t.id);
@@ -219,6 +195,7 @@
     const sec = document.createElement('section');
     sec.className = 'row';
     sec.style.paddingTop = '110px';
+    sec.style.minHeight = '80vh';
     sec.innerHTML = `<h2>${title}</h2>`;
     if (!items.length) { sec.insertAdjacentHTML('beforeend', `<div class="empty">${emptyMsg}</div>`); return sec; }
     const g = document.createElement('div');
@@ -234,7 +211,6 @@
     const logged = !!getSession();
     host.innerHTML = '';
 
-    // filtered / search view (members)
     if (logged && (state.q || state.filter !== 'all')) {
       let pool = TITLES;
       if (state.filter === 'series') pool = pool.filter(t => t.type === 'series');
@@ -255,7 +231,34 @@
     host.appendChild(rowEl('Binge-Worthy TV Shows', TITLES.filter(t => t.type === 'series'), { memberOnly: true }));
     host.appendChild(rowEl('Blockbuster Movies', TITLES.filter(t => t.type === 'movie'), { memberOnly: true }));
     host.appendChild(rowEl('Action & Adventure', TITLES.filter(t => /Action|Adventure/.test(t.genre)), { memberOnly: true }));
+    host.appendChild(rowEl('Because You Watched Last Orbit', shuffle(TITLES.filter(t => /Sci-Fi|Drama/.test(t.genre))), { memberOnly: true }));
     host.appendChild(rowEl('Sci-Fi, Fantasy & Mystery', TITLES.filter(t => /Sci-Fi|Fantasy|Mystery/.test(t.genre)), { memberOnly: true }));
+    host.appendChild(rowEl('Crime & Thriller', TITLES.filter(t => /Crime|Thriller/.test(t.genre)), { memberOnly: true }));
+    host.appendChild(rowEl('Anime & Animation', TITLES.filter(t => /Anime/.test(t.genre)).concat(shuffle(TITLES).slice(0, 8)), { memberOnly: true }));
+    host.appendChild(rowEl('Critically Acclaimed', TITLES.filter(t => t.match >= 94), { memberOnly: true }));
+    host.appendChild(rowEl('Coming Soon', shuffle(TITLES).slice(0, 12), { memberOnly: true }));
+    host.appendChild(rowEl('Short & Sweet: Under 2 Hours', shuffle(TITLES.filter(t => t.type === 'movie')), { memberOnly: true }));
+  }
+
+  function renderGenres() {
+    const grid = $('#genre-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    GENRES.forEach(g => {
+      const d = document.createElement('div');
+      d.className = 'genre tilt';
+      d.style.setProperty('--g', `linear-gradient(135deg, ${g.c[0]}, ${g.c[1]})`);
+      d.innerHTML = `<span class="ge">${g.emoji}</span>${g.name}<i class="glare"></i>`;
+      d.addEventListener('click', () => {
+        const search = $('.search');
+        if (search) { search.classList.add('open'); $('input', search).value = g.name; }
+        state.q = g.name.toLowerCase();
+        renderRows();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      grid.appendChild(d);
+    });
+    initTilt(grid);
   }
 
   function toggleList(t) {
@@ -273,7 +276,7 @@
     toast(`▶  Now playing “${t.title}” (demo)`);
   }
 
-  /* ---------- modal ---------- */
+  /* modal */
   function openModal(t) {
     let m = $('.modal');
     if (!m) {
@@ -315,16 +318,18 @@
       toggleList(t);
     });
     requestAnimationFrame(() => m.classList.add('open'));
+    if (scroll.lenis) scroll.lenis.stop();
     document.body.style.overflow = 'hidden';
   }
   function closeModal() {
     const m = $('.modal');
     if (m) m.classList.remove('open');
+    if (scroll.lenis) scroll.lenis.start();
     document.body.style.overflow = '';
   }
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  /* ---------- billboard (member home) ---------- */
+  /* billboard (member home) */
   function renderBillboard() {
     const host = $('#bb-content');
     if (!host) return;
@@ -343,7 +348,51 @@
     $('#bb-info').addEventListener('click', () => openModal(t));
   }
 
-  /* ---------- FAQ ---------- */
+  /* navbar */
+  function initNav() {
+    const nav = $('#nav');
+    const session = getSession();
+    document.body.classList.toggle('logged-in', !!session && document.body.dataset.page === 'home');
+
+    if (nav) {
+      const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 24);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    if (session) {
+      const av = $('#avatar'); if (av) av.textContent = (session.name || session.email || 'U').charAt(0).toUpperCase();
+      const who = $('#menu-who'); if (who) who.textContent = session.email;
+    }
+
+    const profile = $('.profile');
+    if (profile) {
+      $('#avatar-btn').addEventListener('click', (e) => { e.stopPropagation(); $('.menu', profile).classList.toggle('open'); });
+      document.addEventListener('click', () => $('.menu', profile).classList.remove('open'));
+    }
+    const out = $('#signout');
+    if (out) out.addEventListener('click', () => { store.del(KEYS.session); location.href = 'index.html'; });
+
+    const search = $('.search');
+    if (search) {
+      const input = $('input', search);
+      $('button', search).addEventListener('click', () => {
+        search.classList.toggle('open');
+        if (search.classList.contains('open')) input.focus();
+        else { input.value = ''; state.q = ''; renderRows(); }
+      });
+      input.addEventListener('input', () => { state.q = input.value.trim().toLowerCase(); renderRows(); });
+    }
+
+    $$('.nav-links button').forEach(b => b.addEventListener('click', () => {
+      $$('.nav-links button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.filter = b.dataset.filter;
+      renderRows();
+      if (state.filter !== 'all') window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+  }
+
   function initFaq() {
     $$('.faq-item').forEach(item => {
       const q = $('.faq-q', item), a = $('.faq-a', item);
@@ -355,7 +404,6 @@
     });
   }
 
-  /* ---------- "Get Started" email forms ---------- */
   function initEmailForms() {
     $$('.email-form').forEach(form => {
       const input = $('input', form), err = $('.form-err', form);
@@ -373,7 +421,6 @@
     });
   }
 
-  /* ---------- show / hide password ---------- */
   function initPwToggles() {
     $$('.toggle-pw').forEach(b => b.addEventListener('click', () => {
       const inp = $('input', b.closest('.field'));
@@ -383,7 +430,536 @@
     }));
   }
 
-  /* ---------- sign-in page ---------- */
+  /* ==========================================================
+     3. THREE.JS SCENE
+        – 3D "N" logo that flies at you as you leave the hero
+        – a long tunnel of floating movie posters
+        – glowing rings, light streaks and dust particles
+        – camera flies through it all, driven by scroll
+     ========================================================== */
+  const TUNNEL_LEN = 440;
+
+  function posterTexture(T, t) {
+    const W = 300, H = 450;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const rr = (r) => { x.beginPath(); x.moveTo(r, 0); x.arcTo(W, 0, W, H, r); x.arcTo(W, H, 0, H, r); x.arcTo(0, H, 0, 0, r); x.arcTo(0, 0, W, 0, r); x.closePath(); };
+
+    x.save();
+    rr(26); x.clip();
+    const g = x.createLinearGradient(0, 0, W * .6, H);
+    g.addColorStop(0, t.c[0]); g.addColorStop(1, t.c[1]);
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+    const rg = x.createRadialGradient(W / 2, H * .38, 6, W / 2, H * .38, W * .7);
+    rg.addColorStop(0, 'rgba(255,255,255,.34)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = rg; x.fillRect(0, 0, W, H);
+
+    const sh = x.createLinearGradient(0, 0, W, H);
+    sh.addColorStop(.35, 'rgba(255,255,255,0)'); sh.addColorStop(.5, 'rgba(255,255,255,.13)'); sh.addColorStop(.65, 'rgba(255,255,255,0)');
+    x.fillStyle = sh; x.fillRect(0, 0, W, H);
+
+    x.font = '150px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(t.emoji, W / 2, H * .38);
+
+    const bg = x.createLinearGradient(0, H * .6, 0, H);
+    bg.addColorStop(0, 'rgba(0,0,0,0)'); bg.addColorStop(1, 'rgba(0,0,0,.88)');
+    x.fillStyle = bg; x.fillRect(0, H * .6, W, H * .4);
+
+    x.fillStyle = '#e50914'; x.font = '900 34px Arial,sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top';
+    x.fillText('N', 18, 14);
+
+    x.fillStyle = '#fff'; x.font = '800 30px Inter,Arial,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    const words = t.title.toUpperCase().split(' ');
+    const lines = []; let cur = '';
+    words.forEach(w => {
+      const test = cur ? cur + ' ' + w : w;
+      if (x.measureText(test).width > W - 44 && cur) { lines.push(cur); cur = w; } else cur = test;
+    });
+    lines.push(cur);
+    let y = H - 30 - (lines.length - 1) * 34;
+    lines.forEach(l => { x.fillText(l, W / 2, y); y += 34; });
+    x.restore();
+
+    rr(26); x.lineWidth = 3; x.strokeStyle = 'rgba(255,255,255,.28)'; x.stroke();
+
+    const tex = new T.CanvasTexture(c);
+    tex.generateMipmaps = false;
+    tex.minFilter = T.LinearFilter;
+    tex.magFilter = T.LinearFilter;
+    return tex;
+  }
+
+  function glowTexture(T, inner, outer) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, inner); g.addColorStop(1, outer);
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    return new T.CanvasTexture(c);
+  }
+
+  function createScene(mode) {
+    const T = window.THREE;
+    if (!T) { html.classList.add('no-webgl'); return null; }
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'gl';
+    canvas.setAttribute('aria-hidden', 'true');
+    document.body.prepend(canvas);
+
+    let renderer;
+    try {
+      renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    } catch (err) {
+      canvas.remove(); html.classList.add('no-webgl'); return null;
+    }
+    html.classList.add('gl');
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new T.Scene();
+    scene.fog = new T.Fog(0x070707, 16, 105);
+    const camera = new T.PerspectiveCamera(60, 1, 0.1, 260);
+    camera.position.set(0, 0, 10);
+
+    /* lights (used by the 3D logo) */
+    scene.add(new T.AmbientLight(0xffffff, 0.55));
+    const key = new T.DirectionalLight(0xffffff, 1.1); key.position.set(5, 8, 10); scene.add(key);
+    const redLight = new T.PointLight(0xe50914, 2.2, 40); scene.add(redLight);
+
+    /* ---------- poster tunnel ---------- */
+    const texs = TITLES.map(t => posterTexture(T, t));
+    const planeGeo = new T.PlaneGeometry(3, 4.5);
+    const COUNT = 84;
+    const posters = [];
+    for (let i = 0; i < COUNT; i++) {
+      const mat = new T.MeshBasicMaterial({ map: texs[i % texs.length], transparent: true, side: T.DoubleSide, depthWrite: false });
+      const m = new T.Mesh(planeGeo, mat);
+      const a = i * 2.399963 + Math.random() * 0.4;
+      const r = 6 + Math.random() * 5 + (i % 3) * 1.2;
+      const px = Math.cos(a) * r * 1.35, py = Math.sin(a) * r * 0.7;
+      const pz = -16 - i * (TUNNEL_LEN / COUNT);
+      m.position.set(px, py, pz);
+      m.rotation.y = -px * 0.05;
+      m.rotation.x = py * 0.015;
+      m.scale.setScalar(0.8 + Math.random() * 0.55);
+      m.userData = { y: py, z: pz, ph: Math.random() * 6.28 };
+      scene.add(m);
+      posters.push(m);
+    }
+
+    /* ---------- glowing rings ---------- */
+    const rings = [];
+    for (let i = 0; i < 16; i++) {
+      const geo = new T.TorusGeometry(13 + Math.random() * 2.5, 0.025, 6, 140);
+      const mat = new T.MeshBasicMaterial({ color: i % 3 ? 0xe50914 : 0xffffff, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false });
+      const m = new T.Mesh(geo, mat);
+      m.position.z = -10 - i * 28;
+      m.userData.spin = (Math.random() - 0.5) * 0.3;
+      scene.add(m);
+      rings.push(m);
+    }
+
+    /* ---------- dust particles ---------- */
+    const PC = 2600;
+    const pos = new Float32Array(PC * 3), col = new Float32Array(PC * 3);
+    for (let i = 0; i < PC; i++) {
+      const a = Math.random() * 6.283, r = 3 + Math.random() * 16;
+      pos[i * 3] = Math.cos(a) * r;
+      pos[i * 3 + 1] = Math.sin(a) * r * 0.7;
+      pos[i * 3 + 2] = 20 - Math.random() * (TUNNEL_LEN + 80);
+      const red = Math.random() < 0.55, v = 0.6 + Math.random() * 0.4;
+      col[i * 3] = red ? 1 : v; col[i * 3 + 1] = red ? 0.12 : v; col[i * 3 + 2] = red ? 0.12 : v;
+    }
+    const pg = new T.BufferGeometry();
+    pg.setAttribute('position', new T.BufferAttribute(pos, 3));
+    pg.setAttribute('color', new T.BufferAttribute(col, 3));
+    const dust = new T.Points(pg, new T.PointsMaterial({
+      size: 0.15, map: glowTexture(T, 'rgba(255,255,255,1)', 'rgba(255,255,255,0)'), vertexColors: true,
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0.9
+    }));
+    scene.add(dust);
+
+    /* ---------- light streaks (stretch when you scroll fast) ---------- */
+    const streaks = [];
+    const sGeo = new T.BoxGeometry(0.025, 0.025, 1);
+    for (let i = 0; i < 70; i++) {
+      const m = new T.Mesh(sGeo, new T.MeshBasicMaterial({ color: Math.random() < 0.6 ? 0xff2a35 : 0xffffff, transparent: true, opacity: 0.55, blending: T.AdditiveBlending, depthWrite: false }));
+      const a = Math.random() * 6.283, r = 4 + Math.random() * 11;
+      m.position.set(Math.cos(a) * r, Math.sin(a) * r * 0.7, 10 - Math.random() * (TUNNEL_LEN + 60));
+      m.userData.base = 3 + Math.random() * 6;
+      scene.add(m);
+      streaks.push(m);
+    }
+
+    /* ---------- 3D "N" logo (landing hero only) ---------- */
+    let logo = null, logoMats = [], logoGlow = null;
+    if (mode === 'hero') {
+      logo = new T.Group();
+      const W = 4.2, H = 6, B = 1.3, D = 1.1;
+      const mk = (shape, color) => {
+        const geo = new T.ExtrudeGeometry(shape, { depth: D, bevelEnabled: true, bevelThickness: 0.14, bevelSize: 0.1, bevelSegments: 4, curveSegments: 2 });
+        const mat = new T.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.3, emissive: 0x6a0208, emissiveIntensity: 0.45, transparent: true });
+        logoMats.push(mat);
+        const mesh = new T.Mesh(geo, mat);
+        mesh.position.set(-W / 2, -H / 2, -D / 2);
+        return mesh;
+      };
+      const left = new T.Shape(); left.moveTo(0, 0); left.lineTo(B, 0); left.lineTo(B, H); left.lineTo(0, H); left.closePath();
+      const right = new T.Shape(); right.moveTo(W - B, 0); right.lineTo(W, 0); right.lineTo(W, H); right.lineTo(W - B, H); right.closePath();
+      const diag = new T.Shape(); diag.moveTo(0, H); diag.lineTo(B, H); diag.lineTo(W, 0); diag.lineTo(W - B, 0); diag.closePath();
+      logo.add(mk(left, 0xb1060f), mk(right, 0xb1060f), mk(diag, 0xe50914));
+      scene.add(logo);
+
+      logoGlow = new T.Sprite(new T.SpriteMaterial({
+        map: glowTexture(T, 'rgba(229,9,19,.85)', 'rgba(229,9,19,0)'), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: 0.7
+      }));
+      logoGlow.scale.set(20, 20, 1);
+      scene.add(logoGlow);
+    }
+
+    /* ---------- sizing ---------- */
+    let wide = true;
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      wide = w > 900;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    /* ---------- frame ---------- */
+    let fov = 60, roll = 0;
+    function render(time, drift) {
+      const y = scroll.y;
+      const vh = window.innerHeight;
+
+      /* how far through the hero / the rest of the page are we? */
+      const heroPx = mode === 'hero' ? vh : 0;
+      const ph = heroPx ? clamp(y / heroPx) : 0;
+      let rest = clamp((y - heroPx) / Math.max(1, scroll.max - heroPx));
+      let camZ;
+      if (drift) {
+        /* pages that don't scroll (sign-in / sign-up): slow automatic flight */
+        rest = 0.18 + 0.18 * Math.sin(time * 0.00007);
+        camZ = 10 - rest * TUNNEL_LEN;
+      } else {
+        camZ = 10 - ph * 4 - rest * TUNNEL_LEN;
+      }
+
+      /* camera drift + mouse parallax */
+      const tx = mouse.x * 1.5 + Math.sin(rest * 18) * 0.9;
+      const ty = -mouse.y * 1.0 + Math.cos(rest * 14) * 0.55;
+      camera.position.x += (tx - camera.position.x) * 0.05;
+      camera.position.y += (ty - camera.position.y) * 0.05;
+      camera.position.z = camZ;
+      camera.lookAt(camera.position.x * 0.35, camera.position.y * 0.35, camZ - 30);
+      roll += ((-mouse.x * 0.05 + Math.sin(rest * 10) * 0.06) - roll) * 0.05;
+      camera.rotateZ(roll);
+
+      /* speed "warp": widen the FOV and stretch streaks while scrolling fast */
+      const speed = reduced ? 0 : Math.abs(scroll.vel);
+      fov += ((60 + Math.min(speed * 0.35, 18)) - fov) * 0.08;
+      if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+      const stretch = 1 + Math.min(speed * 0.08, 9);
+
+      /* logo */
+      if (logo) {
+        logo.visible = logoGlow.visible = ph < 0.995;
+        const gx = wide ? 3.7 : 0, gy = wide ? 0 : 1.9;
+        const base = wide ? 1 : 0.62;
+        logo.position.set(gx + camera.position.x * 0.2, gy, 0);
+        logo.rotation.y = mouse.x * 0.5 + Math.sin(time * 0.0005) * 0.3 + ph * 2.6;
+        logo.rotation.x = -mouse.y * 0.25 + Math.sin(time * 0.0007) * 0.06;
+        logo.scale.setScalar(base * (1 + ph * 1.8));
+        const a = clamp(1 - ph * 1.15);
+        logoMats.forEach(m => { m.opacity = a; });
+        logoGlow.position.set(logo.position.x, gy, -3);
+        logoGlow.material.opacity = 0.55 * a + 0.1 * Math.sin(time * 0.002);
+        redLight.position.set(gx - 2 + Math.cos(time * 0.001) * 3, 2 + Math.sin(time * 0.0013) * 2, 5);
+      } else {
+        redLight.position.set(camera.position.x, camera.position.y, camZ - 8);
+      }
+
+      /* posters: float, fade in/out */
+      for (let i = 0; i < posters.length; i++) {
+        const m = posters[i], d = camZ - m.userData.z;
+        const o = d < 2.5 ? 0 : d < 12 ? (d - 2.5) / 9.5 : 1;
+        m.visible = o > 0.01 && d < 125;
+        if (!m.visible) continue;
+        m.material.opacity = o;
+        m.position.y = m.userData.y + Math.sin(time * 0.0006 + m.userData.ph) * 0.35;
+        m.rotation.z = Math.sin(time * 0.0004 + m.userData.ph) * 0.05;
+      }
+      rings.forEach(r => { r.rotation.z += r.userData.spin * 0.004; });
+      streaks.forEach(s => { s.scale.z = s.userData.base * stretch; });
+      dust.rotation.z = time * 0.00003;
+
+      renderer.render(scene, camera);
+    }
+
+    return { render, resize };
+  }
+
+  /* ==========================================================
+     4. SCROLL ENGINE : smooth scroll, pinned chapters, gallery
+     ========================================================== */
+  const pins = [];
+
+  function splitWords(el) {
+    const raw = el.textContent.trim().split(/\s+/);
+    el.textContent = '';
+    raw.forEach(tok => {
+      const s = document.createElement('span');
+      s.className = 'w' + (tok.includes('*') ? ' red' : '');
+      s.textContent = tok.replace(/\*/g, '') + ' ';
+      el.appendChild(s);
+    });
+    return $$('.w', el);
+  }
+
+  function buildGallery() {
+    const track = $('.h-track');
+    if (!track) return;
+    track.innerHTML = '';
+    TITLES.forEach(t => {
+      const c = document.createElement('div');
+      c.className = 'h-card';
+      c.style.setProperty('--g', grad(t));
+      c.innerHTML = `<span class="hc-emoji">${t.emoji}</span><div class="hc-info"><b>${t.title}</b><small>${t.genre} · ${t.year}</small></div>`;
+      c.addEventListener('click', () => openModal(t));
+      track.appendChild(c);
+    });
+  }
+
+  function measureGallery(pin) {
+    pin.centers = pin.cards.map(c => c.offsetLeft + c.offsetWidth / 2);
+    pin.maxShift = Math.max(0, pin.track.scrollWidth - window.innerWidth);
+  }
+
+  function initPins() {
+    pins.length = 0;
+    $$('.pin-text').forEach(sec => {
+      pins.push({ sec, type: 'words', words: splitWords($('[data-split]', sec)), last: -1 });
+    });
+    const hs = $('.hscroll');
+    if (hs) {
+      buildGallery();
+      const pin = { sec: hs, type: 'h', track: $('.h-track', hs), bar: $('.h-bar i', hs), cards: $$('.h-card', hs) };
+      measureGallery(pin);
+      pins.push(pin);
+    }
+    const tn = $('.tunnel');
+    if (tn) pins.push({ sec: tn, type: 'tunnel', caps: $$('.t-cap', tn), bar: $('.t-bar i', tn), num: $('.t-num', tn), last: -1 });
+  }
+
+  function updatePins() {
+    const vh = window.innerHeight, vw = window.innerWidth;
+    for (const pin of pins) {
+      if (pin.sec.offsetParent === null) continue;      // hidden (member view)
+      const r = pin.sec.getBoundingClientRect();
+      if (r.bottom < -60 || r.top > vh + 60) continue;
+      const p = clamp(-r.top / Math.max(1, r.height - vh));
+
+      if (pin.type === 'words') {
+        const n = pin.words.length;
+        const k = Math.round(clamp(p / 0.82) * n);
+        if (k !== pin.last) { pin.words.forEach((w, i) => w.classList.toggle('lit', i < k)); pin.last = k; }
+      } else if (pin.type === 'h') {
+        const shift = p * pin.maxShift;
+        pin.track.style.transform = `translate3d(${-shift}px,-50%,0)`;
+        for (let i = 0; i < pin.cards.length; i++) {
+          const k = (pin.centers[i] - shift - vw / 2) / (vw / 2);          // -1 … 1 across the screen
+          const ry = clamp(k, -1.3, 1.3) * -28;
+          const s = 1 - Math.min(1, Math.abs(k)) * 0.15;
+          pin.cards[i].style.transform = `perspective(1300px) translateZ(${(1 - Math.abs(k)) * 40}px) rotateY(${ry}deg) scale(${s})`;
+        }
+        pin.bar.style.transform = `scaleX(${p})`;
+      } else if (pin.type === 'tunnel') {
+        const n = pin.caps.length;
+        const idx = Math.min(n - 1, Math.floor(p * n * 0.999));
+        if (idx !== pin.last) {
+          pin.caps.forEach((c, i) => c.classList.toggle('on', i === idx));
+          if (pin.num) pin.num.textContent = String(idx + 1).padStart(2, '0');
+          pin.last = idx;
+        }
+        pin.bar.style.transform = `scaleX(${p})`;
+      }
+    }
+  }
+
+  /* progress bar + percentage */
+  function initProgressUI() {
+    const bar = document.createElement('div'); bar.className = 'progress-top';
+    const ui = document.createElement('div'); ui.className = 'scroll-ui';
+    ui.innerHTML = '<span id="sp-pct">0%</span><i><b></b></i>';
+    document.body.append(bar, ui);
+    scroll.bar = bar; scroll.pct = $('#sp-pct', ui); scroll.pbar = $('b', ui);
+  }
+
+  /* master loop: smooth scroll → 3D scene → DOM effects */
+  function startLoop(sceneObj) {
+    let frame = 0, prevY = window.scrollY, rx = mouse.px, ry = mouse.py;
+    const ring = $('.cursor-ring'), dot = $('.cursor-dot');
+    const drift = () => scroll.max < 60;
+
+    function loop(time) {
+      if (scroll.lenis) scroll.lenis.raf(time);
+
+      if (frame % 30 === 0) scroll.max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      scroll.y = window.scrollY;
+      scroll.vel += ((scroll.y - prevY) - scroll.vel) * 0.18;
+      prevY = scroll.y;
+      scroll.p = clamp(scroll.y / scroll.max);
+
+      mouse.x += (mouse.tx - mouse.x) * 0.06 || 0;
+      mouse.y += (mouse.ty - mouse.y) * 0.06 || 0;
+
+      if (scroll.bar) {
+        scroll.bar.style.transform = `scaleX(${scroll.p})`;
+        scroll.pct.textContent = Math.round(scroll.p * 100) + '%';
+        scroll.pbar.style.transform = `scaleX(${scroll.p})`;
+      }
+
+      if (ring) {
+        rx += (mouse.px - rx) * 0.17; ry += (mouse.py - ry) * 0.17;
+        ring.style.transform = `translate(${rx}px,${ry}px)`;
+        dot.style.transform = `translate(${mouse.px}px,${mouse.py}px)`;
+      }
+
+      updatePins();
+      if (sceneObj) sceneObj.render(time, drift());
+      frame++;
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function initSmoothScroll() {
+    if (window.Lenis && !reduced) {
+      try {
+        scroll.lenis = new window.Lenis({
+          duration: 1.25,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true
+        });
+      } catch (e) { scroll.lenis = null; }
+    }
+    $$('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+  }
+
+  /* ==========================================================
+     5. EFFECTS : loader, cursor, tilt, magnetic, reveal, counters
+     ========================================================== */
+  function initLoader() {
+    let first = true;
+    try { first = !sessionStorage.getItem('nf_loaded'); sessionStorage.setItem('nf_loaded', '1'); } catch (e) { /* ignore */ }
+    html.classList.add('loading');
+
+    const ld = document.createElement('div');
+    ld.className = 'loader';
+    ld.innerHTML = `<div class="ld-logo">${'NETFLIX'.split('').map((c, i) => `<span style="--i:${i}">${c}</span>`).join('')}</div><div class="ld-bar"><i></i></div><div class="ld-num">0%</div>`;
+    document.body.appendChild(ld);
+
+    const dur = first ? 2000 : 600, t0 = performance.now();
+    const bar = $('.ld-bar i', ld), num = $('.ld-num', ld);
+    (function tick(now) {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      bar.style.width = (e * 100) + '%';
+      num.textContent = Math.round(e * 100) + '%';
+      if (k < 1) requestAnimationFrame(tick);
+      else {
+        ld.classList.add('done');
+        html.classList.remove('loading');
+        document.body.classList.add('ready');
+        setTimeout(() => ld.remove(), 1000);
+      }
+    })(t0);
+  }
+
+  function initCursor() {
+    // Use the native browser cursor.
+    // Custom cursor effects have been removed to improve performance.
+    document.documentElement.classList.remove('has-cursor');
+
+    document.querySelectorAll('.cursor-dot, .cursor-ring').forEach(el => el.remove());
+}
+
+  function initMouse() {
+    mouse.tx = 0; mouse.ty = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouse.px = e.clientX; mouse.py = e.clientY;
+      mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.ty = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+  }
+
+  function initTilt(root = document) {
+    $$('.tilt', root).forEach(el => {
+      if (el._tilt) return;
+      el._tilt = true;
+      const max = +(el.dataset.tilt || 12);
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        el.style.transform = `perspective(900px) rotateX(${(0.5 - py) * max}deg) rotateY(${(px - 0.5) * max * 1.4}deg) translateZ(12px)`;
+        el.style.setProperty('--gx', (px * 100) + '%');
+        el.style.setProperty('--gy', (py * 100) + '%');
+      });
+      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+    });
+  }
+
+  function initMagnetic() {
+    $$('.magnetic').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+        el.style.transform = `translate(${dx * 0.22}px, ${dy * 0.32}px)`;
+      });
+      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+    });
+  }
+
+  function initReveal() {
+    const items = $$('[data-reveal]');
+    if (!('IntersectionObserver' in window)) { items.forEach(i => i.classList.add('in')); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+    items.forEach(el => { if (el.dataset.delay) el.style.setProperty('--d', el.dataset.delay + 's'); io.observe(el); });
+  }
+
+  function initCounters() {
+    const els = $$('[data-count]');
+    if (!els.length || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        io.unobserve(en.target);
+        const el = en.target, end = +el.dataset.count, suf = el.dataset.suffix || '', t0 = performance.now(), dur = 1800;
+        (function tick(now) {
+          const k = clamp((now - t0) / dur), e = k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
+          el.textContent = Math.round(end * e) + suf;
+          if (k < 1) requestAnimationFrame(tick);
+        })(t0);
+      });
+    }, { threshold: 0.5 });
+    els.forEach(el => io.observe(el));
+  }
+
+  function initMarquee() {
+    $$('.mq-track').forEach(t => { t.innerHTML = t.innerHTML + t.innerHTML; });
+  }
+
+  /* ==========================================================
+     6. PAGES
+     ========================================================== */
   function initSignin() {
     if (getSession()) { location.replace('index.html'); return; }
     const form = $('#signin-form');
@@ -423,7 +999,6 @@
     if (demo) demo.addEventListener('click', (e) => { e.preventDefault(); id.value = DEMO.email; pw.value = DEMO.password; });
   }
 
-  /* ---------- get started (2-step sign-up) ---------- */
   function initStart() {
     const s1 = $('#step1'), s2 = $('#step2');
     if (!s1 || !s2) return;
@@ -473,21 +1048,52 @@
   /* ---------- boot ---------- */
   document.addEventListener('DOMContentLoaded', () => {
     const page = document.body.dataset.page;
-    buildPosterWalls();
-    initSpotlight();
+
+    initLoader();
+    initMouse();
+    initCursor();
+    buildPosterWalls();                 // CSS fallback background
     initNav();
     initPwToggles();
-
-    let resizeT;
-    window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(buildPosterWalls, 250); });
 
     if (page === 'home') {
       renderBillboard();
       renderRows();
+      renderGenres();
       initFaq();
       initEmailForms();
+      initMarquee();
+      initPins();
     }
     if (page === 'signin') initSignin();
     if (page === 'start')  initStart();
+
+    initTilt();
+    initMagnetic();
+    initReveal();
+    initCounters();
+    initSmoothScroll();
+    initProgressUI();
+
+    /* build the 3D scene (after fonts, so poster titles use Inter) */
+    const mode = (page === 'home' && !getSession()) ? 'hero' : 'ambient';
+    const go = () => {
+      let sceneObj = null;
+      try { sceneObj = createScene(mode); } catch (err) { console.error('3D scene failed, using CSS fallback:', err); html.classList.remove('gl'); html.classList.add('no-webgl'); const c = $('#gl'); if (c) c.remove(); }
+      startLoop(sceneObj);
+    };
+    let started = false;
+    const once = () => { if (!started) { started = true; go(); } };
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(once); setTimeout(once, 1200); } else once();
+
+    let resizeT;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(() => {
+        buildPosterWalls();
+        pins.forEach(p => { if (p.type === 'h') measureGallery(p); });
+      }, 250);
+    });
+    window.addEventListener('load', () => pins.forEach(p => { if (p.type === 'h') measureGallery(p); }));
   });
 })();
