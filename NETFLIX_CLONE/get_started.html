@@ -1,68 +1,53 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netflix - Get Started</title>
-
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
-
-        body{
-            font-family:Arial, sans-serif;
-            background:#141414;
-            color:white;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-        }
-
-        .container{
-            text-align:center;
-            background:rgba(0,0,0,.8);
-            padding:50px;
-            border-radius:8px;
-            width:500px;
-        }
-
-        h1{
-            margin-bottom:20px;
-        }
-
-        p{
-            margin-bottom:30px;
-        }
-
-        a{
-            text-decoration:none;
-            background:#e50914;
-            color:white;
-            padding:12px 24px;
-            border-radius:4px;
-        }
-
-        a:hover{
-            background:#c11119;
-        }
-    </style>
+    <title>Join Netflix — Begin Your Journey</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="auth-page">
 
-    <div class="container">
-        <h1>Welcome to Netflix</h1>
+    <div class="grain"></div>
 
-        <p>
-            Your membership journey starts here.
-            Enjoy unlimited movies, TV shows, and more.
-        </p>
+    <a href="index.html" class="logo auth-logo">NETFLIX<span>.</span></a>
 
-        <a href="signin.html">Continue to Sign In</a>
-    </div>
+    <div class="auth-bg"></div>
+
+    <main class="auth-container">
+        <form class="auth-box" id="signupForm">
+            <p class="eyebrow">UNLIMITED ENTERTAINMENT</p>
+            <h1>Join the<br><span class="red-text">experience.</span></h1>
+            <p class="auth-subtitle">Create your account and explore another universe.</p>
+
+            <label for="name">Full name</label>
+            <input type="text" id="name" placeholder="Your name" required>
+
+            <label for="signupEmail">Email address</label>
+            <input type="email" id="signupEmail" placeholder="you@example.com" required>
+
+            <label for="signupPassword">Create password</label>
+            <input type="password" id="signupPassword" placeholder="At least 8 characters" minlength="8" required>
+
+            <button class="auth-submit" type="submit">Create Account ↗</button>
+
+            <p class="auth-bottom">
+                Already a member? <a href="signin.html">Sign in.</a>
+            </p>
+
+            <p class="auth-legal">
+                This is a frontend concept. Account creation is not connected to a server.
+            </p>
+        </form>
+    </main>
+
+    <script>
+        document.getElementById("signupForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            alert("Welcome! This is a frontend demo. Signup backend is not connected.");
+        });
+    </script>
 
 </body>
 </html>

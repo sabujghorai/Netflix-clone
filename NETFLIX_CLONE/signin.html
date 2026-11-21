@@ -1,99 +1,58 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="netflix.png" type="image/png">
-    <title>Netflix - Sign In</title>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #141414;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            width: 350px;
-            background: rgba(0, 0, 0, .8);
-            padding: 40px;
-            border-radius: 8px;
-        }
-
-        h1 {
-            margin-bottom: 25px;
-        }
-
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: none;
-            border-radius: 4px;
-        }
-
-        input:hover {
-            background-color: #f1e6e6;
-            transform: scale(1.02);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        }
-
-        input:focus {
-            outline: none;
-            border: 2px solid #00bcd4;
-            box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            background: #e50914;
-            color: white;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        a {
-            color: white;
-            text-decoration: none;
-        }
-
-        .back {
-            display: block;
-            margin-top: 20px;
-            text-align: center;
-        }
-    </style>
+    <title>Sign In — Netflix</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
+<body class="auth-page">
 
-<body>
+    <div class="grain"></div>
 
-    <div class="container">
-        <h1>Sign In</h1>
+    <a href="index.html" class="logo auth-logo">NETFLIX<span>.</span></a>
 
-        <form>
-            <input type="email" placeholder="Email">
-            <input type="password" placeholder="Password">
+    <div class="auth-bg"></div>
 
-            <button type="submit">Sign In</button>
+    <main class="auth-container">
+        <form class="auth-box" id="signinForm">
+            <p class="eyebrow">WELCOME BACK</p>
+            <h1>Sign in.</h1>
+            <p class="auth-subtitle">Your next story awaits.</p>
+
+            <label for="email">Email address</label>
+            <input type="email" id="email" placeholder="you@example.com" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+
+            <button class="auth-submit" type="submit">Sign In ↗</button>
+
+            <div class="auth-divider">OR</div>
+
+            <button class="auth-secondary" type="button" id="guestBtn">Continue as Guest</button>
+
+            <p class="auth-bottom">
+                New to Netflix? <a href="get_started.html">Join now.</a>
+            </p>
+
+            <p class="auth-legal">
+                This is a student frontend concept. No credentials are stored.
+            </p>
         </form>
+    </main>
 
-        <a class="back" href="index.html">← Back to Home</a>
-    </div>
+    <script>
+        document.getElementById("signinForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            alert("Demo only — backend authentication is not connected yet.");
+        });
+
+        document.getElementById("guestBtn").addEventListener("click", function() {
+            window.location.href = "index.html";
+        });
+    </script>
 
 </body>
-
 </html>
