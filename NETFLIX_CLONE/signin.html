@@ -1,58 +1,54 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In — Netflix</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflix Clone – Sign In</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23141414'/%3E%3Ctext x='50' y='76' font-size='74' font-weight='900' text-anchor='middle' fill='%23e50914' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/script.js" defer></script>
 </head>
-<body class="auth-page">
+<body data-page="signin">
 
-    <div class="grain"></div>
+  <header class="nav" id="nav">
+    <div class="nav-left"><a class="logo" href="index.html">NETFLIX</a></div>
+  </header>
 
-    <a href="index.html" class="logo auth-logo">NETFLIX<span>.</span></a>
+  <main class="auth-page">
+    <div class="hero-bg">
+      <div class="poster-wall" data-wall></div>
+      <div class="spot"></div>
+    </div>
 
-    <div class="auth-bg"></div>
+    <div class="auth-card">
+      <h1>Sign In</h1>
+      <div id="banner" class="banner hidden" role="alert"></div>
 
-    <main class="auth-container">
-        <form class="auth-box" id="signinForm">
-            <p class="eyebrow">WELCOME BACK</p>
-            <h1>Sign in.</h1>
-            <p class="auth-subtitle">Your next story awaits.</p>
+      <form id="signin-form" novalidate>
+        <div class="field" id="f-id">
+          <input type="text" id="si-id" placeholder=" " autocomplete="username">
+          <label for="si-id">Email or mobile number</label>
+          <div class="err"></div>
+        </div>
+        <div class="field has-toggle" id="f-pw">
+          <input type="password" id="si-pw" placeholder=" " autocomplete="current-password">
+          <label for="si-pw">Password</label>
+          <button type="button" class="toggle-pw" aria-label="Show or hide password">Show</button>
+          <div class="err"></div>
+        </div>
 
-            <label for="email">Email address</label>
-            <input type="email" id="email" placeholder="you@example.com" required>
+        <button type="submit" class="btn btn-red">Sign In</button>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required>
+        <div class="row-opts">
+          <label><input type="checkbox" id="si-remember" checked> Remember me</label>
+          <a href="#">Need help?</a>
+        </div>
+      </form>
 
-            <button class="auth-submit" type="submit">Sign In ↗</button>
-
-            <div class="auth-divider">OR</div>
-
-            <button class="auth-secondary" type="button" id="guestBtn">Continue as Guest</button>
-
-            <p class="auth-bottom">
-                New to Netflix? <a href="get_started.html">Join now.</a>
-            </p>
-
-            <p class="auth-legal">
-                This is a student frontend concept. No credentials are stored.
-            </p>
-        </form>
-    </main>
-
-    <script>
-        document.getElementById("signinForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            alert("Demo only — backend authentication is not connected yet.");
-        });
-
-        document.getElementById("guestBtn").addEventListener("click", function() {
-            window.location.href = "index.html";
-        });
-    </script>
+      <p class="switch-line">New to Netflix? <a href="get_started.html">Sign up now</a>.</p>
+      <p class="hint">Try the demo account: <b>demo@netflix.com</b> / <b>123456</b> &nbsp;·&nbsp; <a href="#" id="fill-demo" style="text-decoration:underline;color:#ddd">Fill it in</a></p>
+    </div>
+  </main>
 
 </body>
 </html>
