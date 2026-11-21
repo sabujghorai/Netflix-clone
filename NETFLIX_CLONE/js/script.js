@@ -75,6 +75,22 @@
   const byId = (id) => TITLES.find(t => t.id === Number(id));
   const grad = (t) => `linear-gradient(160deg, ${t.c[0]} 0%, ${t.c[1]} 100%)`;
 
+  /* ---------- THUMBNAILS ----------
+     1) your own file first:  images/<id>.jpg  (poster, 2:3)   and  images/banner-<id>.jpg (wide)
+     2) otherwise a photo from picsum.photos (needs internet)
+     3) otherwise the gradient + emoji card stays as the fallback                         */
+  const posterUrl = (t) => `images/${t.id}.jpg`;
+  const posterFallback = (t) => `https://picsum.photos/seed/nfclone${t.id}/400/600`;
+  const bannerUrl = (t) => `images/banner-${t.id}.jpg`;
+  const bannerFallback = (t) => `https://picsum.photos/seed/nfclone${t.id}/1600/900`;
+  window.__imgErr = (img, id, kind) => {
+    const t = byId(id);
+    if (t && !img.dataset.f) { img.dataset.f = '1'; img.src = kind === 'b' ? bannerFallback(t) : posterFallback(t); }
+    else img.remove();                                   // gradient + emoji show through
+  };
+  const posterImg = (t, cls) =>
+    `<img class="${cls}" src="${posterUrl(t)}" alt="" loading="lazy" decoding="async" draggable="false" onerror="__imgErr(this,${t.id},'p')">`;
+
   const GENRES = [
     { name: 'Action',   emoji: '💥', c: ['#b30000', '#2b0000'] },
     { name: 'Comedy',   emoji: '😂', c: ['#d89a2b', '#3a1a00'] },
@@ -107,6 +123,11 @@
   const scroll = { y: 0, max: 1, p: 0, vel: 0, lenis: null };
   const mouse = { x: 0, y: 0, px: innerWidth / 2, py: innerHeight / 2 };
 
+  function goTop() {
+    if (scroll.lenis) scroll.lenis.scrollTo(0, { duration: 1.2 });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function toast(msg) {
     let t = $('.toast');
     if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
@@ -125,7 +146,7 @@
 
   /* CSS poster wall – used as the fallback background if WebGL is unavailable */
   const posterTile = (t) =>
-    `<div class="poster-tile" style="--g:${grad(t)}"><span class="pt-emoji">${t.emoji}</span><span class="pt-title">${t.title}</span></div>`;
+    `<div class="poster-tile" style="--g:${grad(t)}">${posterImg(t, 'pt-img')}<span class="pt-emoji">${t.emoji}</span><span class="pt-title">${t.title}</span></div>`;
 
   function buildPosterWalls() {
     const cols = window.innerWidth < 700 ? 4 : window.innerWidth < 1200 ? 6 : 9;
@@ -150,6 +171,7 @@
     d.dataset.id = t.id;
     d.style.setProperty('--g', grad(t));
     d.innerHTML = `
+      ${posterImg(t, 'card-img')}
       <span class="card-emoji">${t.emoji}</span>
       <span class="card-title">${t.title}</span>
       <div class="card-hover">
@@ -254,7 +276,7 @@
         if (search) { search.classList.add('open'); $('input', search).value = g.name; }
         state.q = g.name.toLowerCase();
         renderRows();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        goTop();
       });
       grid.appendChild(d);
     });
@@ -281,7 +303,7 @@
     let m = $('.modal');
     if (!m) {
       m = document.createElement('div');
-      m.className = 'modal';
+      m.className = 'modal'; m.setAttribute('data-lenis-prevent', '');
       m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true"></div>';
       document.body.appendChild(m);
       m.addEventListener('click', (e) => { if (e.target === m) closeModal(); });
@@ -290,6 +312,7 @@
     const box = $('.modal-box', m);
     box.innerHTML = `
       <div class="m-top" style="--g:${grad(t)}">
+        ${`<img class="m-img" src="${bannerUrl(t)}" alt="" decoding="async" onerror="__imgErr(this,${t.id},'b')">`}
         <button class="m-close" aria-label="Close">✕</button>
         <span class="m-emoji">${t.emoji}</span>
         <div class="m-head">
@@ -335,6 +358,12 @@
     if (!host) return;
     const t = shuffle(TITLES.filter(x => x.match >= 94))[0];
     const art = $('#bb-art'); if (art) art.textContent = t.emoji;
+    const bg = $('#billboard .hero-bg');
+    if (bg) {
+      $$('.bb-img', bg).forEach(i => i.remove());
+      bg.insertAdjacentHTML('afterbegin', `<img class="bb-img" src="${bannerUrl(t)}" alt="" decoding="async" onerror="__imgErr(this,${t.id},'b')">`);
+      if (art) art.style.display = 'none';
+    }
     host.innerHTML = `
       <div class="bb-tag">N &nbsp;${t.type === 'series' ? 'SERIES' : 'FILM'}</div>
       <h1>${t.title}</h1>
@@ -389,7 +418,7 @@
       b.classList.add('active');
       state.filter = b.dataset.filter;
       renderRows();
-      if (state.filter !== 'all') window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (state.filter !== 'all') goTop();
     }));
   }
 
@@ -512,12 +541,12 @@
 
     let renderer;
     try {
-      renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer = new T.WebGLRenderer({ canvas, antialias: (window.devicePixelRatio || 1) < 2, alpha: true, powerPreference: 'high-performance' });
     } catch (err) {
       canvas.remove(); html.classList.add('no-webgl'); return null;
     }
     html.classList.add('gl');
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setClearColor(0x000000, 0);
 
     const scene = new T.Scene();
@@ -731,7 +760,7 @@
       const c = document.createElement('div');
       c.className = 'h-card';
       c.style.setProperty('--g', grad(t));
-      c.innerHTML = `<span class="hc-emoji">${t.emoji}</span><div class="hc-info"><b>${t.title}</b><small>${t.genre} · ${t.year}</small></div>`;
+      c.innerHTML = `${posterImg(t, 'hc-img')}<span class="hc-emoji">${t.emoji}</span><div class="hc-info"><b>${t.title}</b><small>${t.genre} · ${t.year}</small></div>`;
       c.addEventListener('click', () => openModal(t));
       track.appendChild(c);
     });
@@ -758,13 +787,28 @@
     if (tn) pins.push({ sec: tn, type: 'tunnel', caps: $$('.t-cap', tn), bar: $('.t-bar i', tn), num: $('.t-num', tn), last: -1 });
   }
 
+  /* layout is measured only on load / resize / content change (never per frame) */
+  function measurePin(pin) {
+    pin.hidden = pin.sec.offsetParent === null;
+    pin.h = pin.sec.offsetHeight;
+    pin.top = pin.sec.getBoundingClientRect().top + window.scrollY;
+  }
+  function measureScroll() {
+    scroll.max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  }
+  function remeasure() {
+    measureScroll();
+    pins.forEach(p => { if (p.type === 'h') measureGallery(p); measurePin(p); });
+  }
+
   function updatePins() {
     const vh = window.innerHeight, vw = window.innerWidth;
     for (const pin of pins) {
-      if (pin.sec.offsetParent === null) continue;      // hidden (member view)
-      const r = pin.sec.getBoundingClientRect();
-      if (r.bottom < -60 || r.top > vh + 60) continue;
-      const p = clamp(-r.top / Math.max(1, r.height - vh));
+      if (pin.top === undefined) measurePin(pin);
+      if (pin.hidden) continue;                          // hidden (member view)
+      const top = pin.top - scroll.y;
+      if (top + pin.h < -60 || top > vh + 60) continue;
+      const p = clamp(-top / Math.max(1, pin.h - vh));
 
       if (pin.type === 'words') {
         const n = pin.words.length;
@@ -811,19 +855,27 @@
     function loop(time) {
       if (scroll.lenis) scroll.lenis.raf(time);
 
-      if (frame % 30 === 0) scroll.max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      scroll.y = window.scrollY;
-      scroll.vel += ((scroll.y - prevY) - scroll.vel) * 0.18;
+      /* dt = 1 at 60fps, 0.5 at 120fps – keeps the feel identical on every screen */
+      const dt = Math.min(3, (time - (loop._t || time)) / 16.667 || 1);
+      loop._t = time;
+
+      if (frame % 120 === 0) measureScroll();
+      scroll.y = (scroll.lenis && typeof scroll.lenis.scroll === 'number') ? scroll.lenis.scroll : window.scrollY;
+      scroll.vel += ((scroll.y - prevY) / dt - scroll.vel) * (1 - Math.pow(0.82, dt));
       prevY = scroll.y;
       scroll.p = clamp(scroll.y / scroll.max);
 
-      mouse.x += (mouse.tx - mouse.x) * 0.06 || 0;
-      mouse.y += (mouse.ty - mouse.y) * 0.06 || 0;
+      const mk = 1 - Math.pow(0.94, dt);
+      mouse.x += (mouse.tx - mouse.x) * mk || 0;
+      mouse.y += (mouse.ty - mouse.y) * mk || 0;
 
-      if (scroll.bar) {
-        scroll.bar.style.transform = `scaleX(${scroll.p})`;
-        scroll.pct.textContent = Math.round(scroll.p * 100) + '%';
-        scroll.pbar.style.transform = `scaleX(${scroll.p})`;
+      if (scroll.bar && Math.abs(scroll.p - (scroll._lp ?? -1)) > 0.0004) {
+        scroll._lp = scroll.p;
+        const sx = `scaleX(${scroll.p})`;
+        scroll.bar.style.transform = sx;
+        scroll.pbar.style.transform = sx;
+        const pc = Math.round(scroll.p * 100);
+        if (pc !== scroll._pc) { scroll._pc = pc; scroll.pct.textContent = pc + '%'; }
       }
 
       if (ring) {
@@ -844,8 +896,8 @@
     if (window.Lenis && !reduced) {
       try {
         scroll.lenis = new window.Lenis({
-          duration: 1.25,
-          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          lerp: 0.075,            // lower = floatier / more inertia (0.05 – 0.12 is the sweet spot)
+          wheelMultiplier: 0.9,
           smoothWheel: true
         });
       } catch (e) { scroll.lenis = null; }
@@ -1021,7 +1073,7 @@
       banner.className = 'banner hidden';
       s1.classList.add('hidden'); s2.classList.remove('hidden');
       label.textContent = 'STEP 2 OF 2'; prog.classList.add('full');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      goTop();
     });
     [email, pass].forEach(i => i.addEventListener('input', () => setError(i.closest('.field'), '')));
 
@@ -1091,9 +1143,13 @@
       clearTimeout(resizeT);
       resizeT = setTimeout(() => {
         buildPosterWalls();
-        pins.forEach(p => { if (p.type === 'h') measureGallery(p); });
+        remeasure();
       }, 250);
     });
-    window.addEventListener('load', () => pins.forEach(p => { if (p.type === 'h') measureGallery(p); }));
+    window.addEventListener('load', remeasure);
+    if ('ResizeObserver' in window) {
+      let roT;
+      new ResizeObserver(() => { clearTimeout(roT); roT = setTimeout(remeasure, 120); }).observe(document.body);
+    }
   });
 })();
