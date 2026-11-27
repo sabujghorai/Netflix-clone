@@ -496,7 +496,6 @@
     const bg = x.createLinearGradient(0, H * .6, 0, H);
     bg.addColorStop(0, 'rgba(0,0,0,0)'); bg.addColorStop(1, 'rgba(0,0,0,.88)');
     x.fillStyle = bg; x.fillRect(0, H * .6, W, H * .4);
-
     x.fillStyle = '#e50914'; x.font = '900 34px Arial,sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top';
     x.fillText('N', 18, 14);
     x.fillStyle = '#fff'; x.font = '800 30px Inter,Arial,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
