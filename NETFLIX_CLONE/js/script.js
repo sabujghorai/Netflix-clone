@@ -499,7 +499,6 @@
 
     x.fillStyle = '#e50914'; x.font = '900 34px Arial,sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top';
     x.fillText('N', 18, 14);
-
     x.fillStyle = '#fff'; x.font = '800 30px Inter,Arial,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
     const words = t.title.toUpperCase().split(' ');
     const lines = []; let cur = '';
