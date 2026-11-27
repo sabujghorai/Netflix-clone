@@ -737,7 +737,6 @@
     });
     return $$('.w', el);
   }
-
   function buildGallery() {
     const track = $('.h-track');
     if (!track) return;
