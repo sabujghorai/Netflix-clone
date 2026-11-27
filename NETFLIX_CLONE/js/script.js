@@ -412,7 +412,6 @@
       });
       input.addEventListener('input', () => { state.q = input.value.trim().toLowerCase(); renderRows(); });
     }
-
     $$('.nav-links button').forEach(b => b.addEventListener('click', () => {
       $$('.nav-links button').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
