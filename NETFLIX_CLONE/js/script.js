@@ -449,7 +449,6 @@
       input.addEventListener('input', () => { err.textContent = ''; });
     });
   }
-
   function initPwToggles() {
     $$('.toggle-pw').forEach(b => b.addEventListener('click', () => {
       const inp = $('input', b.closest('.field'));
