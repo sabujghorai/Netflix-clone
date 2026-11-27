@@ -725,7 +725,6 @@
      4. SCROLL ENGINE : smooth scroll, pinned chapters, gallery
      ========================================================== */
   const pins = [];
-
   function splitWords(el) {
     const raw = el.textContent.trim().split(/\s+/);
     el.textContent = '';
