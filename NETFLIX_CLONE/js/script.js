@@ -504,7 +504,6 @@
     x.restore();
 
     rr(26); x.lineWidth = 3; x.strokeStyle = 'rgba(255,255,255,.28)'; x.stroke();
-
     const tex = new T.CanvasTexture(c);
     tex.generateMipmaps = false;
     tex.minFilter = T.LinearFilter;
