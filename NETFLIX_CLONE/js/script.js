@@ -484,7 +484,6 @@
     const rg = x.createRadialGradient(W / 2, H * .38, 6, W / 2, H * .38, W * .7);
     rg.addColorStop(0, 'rgba(255,255,255,.34)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
     x.fillStyle = rg; x.fillRect(0, 0, W, H);
-
     const sh = x.createLinearGradient(0, 0, W, H);
     sh.addColorStop(.35, 'rgba(255,255,255,0)'); sh.addColorStop(.5, 'rgba(255,255,255,.13)'); sh.addColorStop(.65, 'rgba(255,255,255,0)');
     x.fillStyle = sh; x.fillRect(0, 0, W, H);
