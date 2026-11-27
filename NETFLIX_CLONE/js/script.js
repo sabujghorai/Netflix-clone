@@ -480,7 +480,6 @@
     const g = x.createLinearGradient(0, 0, W * .6, H);
     g.addColorStop(0, t.c[0]); g.addColorStop(1, t.c[1]);
     x.fillStyle = g; x.fillRect(0, 0, W, H);
-
     const rg = x.createRadialGradient(W / 2, H * .38, 6, W / 2, H * .38, W * .7);
     rg.addColorStop(0, 'rgba(255,255,255,.34)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
     x.fillStyle = rg; x.fillRect(0, 0, W, H);
