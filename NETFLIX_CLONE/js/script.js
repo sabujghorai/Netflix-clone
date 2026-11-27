@@ -702,7 +702,6 @@
       } else {
         redLight.position.set(camera.position.x, camera.position.y, camZ - 8);
       }
-
       /* posters: float, fade in/out */
       for (let i = 0; i < posters.length; i++) {
         const m = posters[i], d = camZ - m.userData.z;
