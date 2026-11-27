@@ -657,7 +657,6 @@
     function render(time, drift) {
       const y = scroll.y;
       const vh = window.innerHeight;
-
       /* how far through the hero / the rest of the page are we? */
       const heroPx = mode === 'hero' ? vh : 0;
       const ph = heroPx ? clamp(y / heroPx) : 0;
