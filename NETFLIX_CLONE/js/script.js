@@ -472,7 +472,6 @@
     c.width = W; c.height = H;
     const x = c.getContext('2d');
     const rr = (r) => { x.beginPath(); x.moveTo(r, 0); x.arcTo(W, 0, W, H, r); x.arcTo(W, H, 0, H, r); x.arcTo(0, H, 0, 0, r); x.arcTo(0, 0, W, 0, r); x.closePath(); };
-
     x.save();
     rr(26); x.clip();
     const g = x.createLinearGradient(0, 0, W * .6, H);
