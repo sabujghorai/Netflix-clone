@@ -488,7 +488,6 @@
     const sh = x.createLinearGradient(0, 0, W, H);
     sh.addColorStop(.35, 'rgba(255,255,255,0)'); sh.addColorStop(.5, 'rgba(255,255,255,.13)'); sh.addColorStop(.65, 'rgba(255,255,255,0)');
     x.fillStyle = sh; x.fillRect(0, 0, W, H);
-
     x.font = '150px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
     x.textAlign = 'center'; x.textBaseline = 'middle';
     x.fillText(t.emoji, W / 2, H * .38);
