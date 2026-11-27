@@ -679,7 +679,6 @@
       camera.lookAt(camera.position.x * 0.35, camera.position.y * 0.35, camZ - 30);
       roll += ((-mouse.x * 0.05 + Math.sin(rest * 10) * 0.06) - roll) * 0.05;
       camera.rotateZ(roll);
-
       /* speed "warp": widen the FOV and stretch streaks while scrolling fast */
       const speed = reduced ? 0 : Math.abs(scroll.vel);
       fov += ((60 + Math.min(speed * 0.35, 18)) - fov) * 0.08;
