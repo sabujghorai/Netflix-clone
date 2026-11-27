@@ -718,7 +718,6 @@
 
       renderer.render(scene, camera);
     }
-
     return { render, resize };
   }
 
